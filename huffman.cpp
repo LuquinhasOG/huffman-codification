@@ -2,6 +2,8 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
 using namespace std;
 
 #define print(n) n->getSymbol() << ": " << n->getFrequence()
@@ -93,7 +95,13 @@ void convertionDictionary(Node* root, map<char, string>* dictionary, string path
 }
 
 int main() {
-    string text = "aabbcaadbdbc";
+    ifstream stream("test.txt");
+    stringstream buffer;
+    string text;
+
+    buffer << stream.rdbuf();
+    text = buffer.str();
+
     vector<Node*> f = countFrequence(text);
     Node* tree = buildHuffmanTree(f);
     map<char, string> convertion;
