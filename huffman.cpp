@@ -6,7 +6,7 @@
 #include <sstream>
 using namespace std;
 
-#define print(n) n->getSymbol() << ": " << n->getFrequence()
+#define pnode(n) cout << n->getSymbol() << ": " << n->getFrequence()
 
 // classe que modela os nós da árvore
 class Node {
@@ -85,7 +85,7 @@ Node* buildHuffmanTree(vector<Node*> nodes) {
     return nodes[0];
 }
 
-void convertionDictionary(Node* root, map<char, string>* dictionary, string path="") {
+void encodingDictionary(Node* root, map<char, string>* dictionary, string path="") {
     if (!root->isLeaf()) {
         convertionDictionary(root->getLeft(), dictionary, (path + "0"));
         convertionDictionary(root->getRight(), dictionary, (path + "1"));
@@ -94,8 +94,8 @@ void convertionDictionary(Node* root, map<char, string>* dictionary, string path
     }
 }
 
-int main() {
-    ifstream stream("test.txt");
+int main(int argc, char *argv[]) {
+    ifstream stream(argv[1]);
     stringstream buffer;
     string text;
 
@@ -104,10 +104,10 @@ int main() {
 
     vector<Node*> f = countFrequence(text);
     Node* tree = buildHuffmanTree(f);
-    map<char, string> convertion;
-    convertionDictionary(tree, &convertion);
+    map<char, string> encoding;
+    encodingDictionary(tree, &encoding);
 
-    for (pair<char, string> i : convertion)
+    for (pair<char, string> i : encoding)
         cout << i.first << ": " << i.second << endl;
 
     return 0;
