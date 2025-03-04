@@ -109,7 +109,7 @@ vector<char> encodingDictToBytes(map<char, string> dictionary) {
 
         // preencher os bits que faltam para completar os bytes para armazenar o código
         char aux = 0b00000000;
-        int num_bits = (p.second.size()/8 + 1)*8;
+        int num_bits = (p.second.size() == 8) ? 8 : (p.second.size()/8 + 1)*8;
         int c = 0;
 
         for (int i = 0; i < num_bits; i++) {
@@ -129,7 +129,45 @@ vector<char> encodingDictToBytes(map<char, string> dictionary) {
         buffer.push_back(aux);
     }
 
+    buffer.push_back(0b00000000);
     return buffer;
+}
+
+map<char, string> restoreDictFromBytes(vector<char> bytes) {
+    map<char, string> dict;
+    // esta variável diz se deve converter o byte para char
+    bool to_char = true;
+    // esta variável diz se deve converter os bytes para um caminho
+    bool to_path = false;
+
+    char current_char;
+    int path_size, aux;
+    string path = "";
+    while (bytes.size() > 0) {
+        if (to_char) {
+            current_char = bytes[0];
+            bytes.erase(bytes.begin());
+            to_char = false;
+        } else if (to_path) {
+            if (aux/8 + 1 > 0 && aux > 0) {
+                path += tobstr(bytes[0]);
+                bytes.erase(bytes.begin());
+                aux -= 8;
+            } else {
+                dict.insert({current_char, path.substr(path.size() - path_size, path_size)});
+                path = "";
+                to_char = true;
+                to_path = false;
+            }
+        } else {
+            path_size = bytes[0];
+            aux = path_size;
+            bytes.erase(bytes.begin());
+            to_path = true;
+        }
+    }
+
+    return dict;
 }
 
 int main(int argc, char *argv[]) {
@@ -154,6 +192,12 @@ int main(int argc, char *argv[]) {
     cout << endl << "Encoding dictionary to store in file: " << endl;
     for (auto i : bytes_dict) {
         cout << tobstr(i) << endl;
+    }
+    cout << endl;
+
+    map<char, string> converted = restoreDictFromBytes(bytes_dict);
+    for (auto i : converted) {
+        cout << i.first << ": " << i.second << endl;
     }
 
     return 0;
