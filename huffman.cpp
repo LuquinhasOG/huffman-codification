@@ -4,7 +4,11 @@
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <bitset>
 using namespace std;
+
+#define tobstr(s) bitset<8>(s).to_string()
+#define bit 0b00000001
 
 #define pnode(n) cout << n->getSymbol() << ": " << n->getFrequence()
 
@@ -85,13 +89,47 @@ Node* buildHuffmanTree(vector<Node*> nodes) {
     return nodes[0];
 }
 
+// cria o dicionario de codificação apartir da árvore
 void encodingDictionary(Node* root, map<char, string>* dictionary, string path="") {
     if (!root->isLeaf()) {
-        convertionDictionary(root->getLeft(), dictionary, (path + "0"));
-        convertionDictionary(root->getRight(), dictionary, (path + "1"));
+        encodingDictionary(root->getLeft(), dictionary, (path + "0"));
+        encodingDictionary(root->getRight(), dictionary, (path + "1"));
     } else {
         dictionary->insert({root->getSymbol(), path});
     }
+}
+
+// transforma o dicionário em bites para poder ser armazenado físicamento no arquivo final
+// formato: char(1 byte), tamanho do código(1 byte), código(quantos bytes forem necessários)
+vector<char> encodingDictToBytes(map<char, string> dictionary) {
+    vector<char> buffer;
+    for (auto p : dictionary) {
+        buffer.push_back(p.first);
+        buffer.push_back(p.second.size());
+
+        // preencher os bits que faltam para completar os bytes para armazenar o código
+        char aux = 0b00000000;
+        int num_bits = (p.second.size()/8 + 1)*8;
+        int c = 0;
+
+        for (int i = 0; i < num_bits; i++) {
+            if (c/8 == 1) {
+                c = 0;
+                buffer.push_back(aux);
+                aux = 0b00000000;
+            }
+
+            if (num_bits - i - 1 < p.second.size()) {
+                aux = aux << 1;
+                aux |= (p.second[p.second.size() - (num_bits - i)] - '0') & bit;
+            }
+            c++;
+        }
+
+        buffer.push_back(aux);
+    }
+
+    return buffer;
 }
 
 int main(int argc, char *argv[]) {
@@ -106,9 +144,17 @@ int main(int argc, char *argv[]) {
     Node* tree = buildHuffmanTree(f);
     map<char, string> encoding;
     encodingDictionary(tree, &encoding);
+    vector<char> bytes_dict = encodingDictToBytes(encoding);
 
-    for (pair<char, string> i : encoding)
+    cout << "Encoding dictionary: " << endl;
+    for (auto i : encoding) {
         cout << i.first << ": " << i.second << endl;
+    }
+
+    cout << endl << "Encoding dictionary to store in file: " << endl;
+    for (auto i : bytes_dict) {
+        cout << tobstr(i) << endl;
+    }
 
     return 0;
 }
