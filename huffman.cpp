@@ -12,6 +12,8 @@ using namespace std;
 
 #define pnode(n) cout << n->getSymbol() << ": " << n->getFrequence()
 
+char division = 0xAA;
+
 // classe que modela os nós da árvore
 class Node {
 private:
@@ -192,23 +194,6 @@ vector<char> encodeText(string text, map<char, string> dict) {
     return buffer;
 }
 
-void writeEncodedFile(vector<char> bytes_dict_buffer, vector<char> encoded_text_buffer) {
-    string write;
-    for (char c : bytes_dict_buffer) {
-        write += c;
-    }
-    write += 0xAAAAAAAA;
-    for (char c : encoded_text_buffer) {
-        write += c;
-    }
-
-    ofstream out("test.huff");
-    out << write;
-    out.close();
-
-    cout << write << endl;
-}
-
 int main(int argc, char *argv[]) {
     ifstream stream(argv[1]);
     stringstream buffer;
@@ -224,7 +209,8 @@ int main(int argc, char *argv[]) {
     vector<char> bytes_dict_buffer = encodingDictToBytes(encoder);
     vector<char> encoded_text_buffer = encodeText(text, encoder);
 
-    writeEncodedFile(bytes_dict_buffer, encoded_text_buffer);
+    writeEncodedFile(bytes_dict_buffer, encoded_text_buffer, "test");
+    readEncodedFile("test.huff");
 
     /**
     cout << "Encoding dictionary:" << endl;
