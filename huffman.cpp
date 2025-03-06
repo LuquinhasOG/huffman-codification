@@ -209,27 +209,16 @@ int main(int argc, char *argv[]) {
     vector<char> bytes_dict_buffer = encodingDictToBytes(encoder);
     vector<char> encoded_text_buffer = encodeText(text, encoder);
 
-    writeEncodedFile(bytes_dict_buffer, encoded_text_buffer, "test");
-    readEncodedFile("test.huff");
-
-    /**
-    cout << "Encoding dictionary:" << endl;
-    for (auto i : encoder) {
-        cout << i.first << ": " << i.second << endl;
-    }
-
-    cout << endl << "Encoding dictionary to store in file:" << endl;
-    for (auto i : bytes_dict) {
+    cout << endl << "Encoding dictionary to store in file: " << endl;
+    for (auto i : bytes_dict_buffer) {
         cout << tobstr(i) << endl;
     }
     cout << endl;
 
-    map<char, string> recovered = restoreDictFromBytes(bytes_dict);
-    cout << "Recovered dictionary:" << endl;
-    for (auto i : recovered) {
+    map<char, string> converted = restoreDictFromBytes(bytes_dict_buffer);
+    for (auto i : converted) {
         cout << i.first << ": " << i.second << endl;
     }
-    **/
 
     return 0;
 }
