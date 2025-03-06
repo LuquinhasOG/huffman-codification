@@ -9,10 +9,7 @@ using namespace std;
 
 #define tobstr(s) bitset<8>(s).to_string()
 #define bit 0b00000001
-
 #define pnode(n) cout << n->getSymbol() << ": " << n->getFrequence()
-
-char division = 0xAA;
 
 // classe que modela os nós da árvore
 class Node {
