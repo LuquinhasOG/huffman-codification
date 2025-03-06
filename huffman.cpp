@@ -98,6 +98,15 @@ void encodingDictionary(Node* root, map<char, string>* dictionary, string path="
     }
 }
 
+map<string, char> reverseDictionary(map<char, string> dictionary) {
+    map<string, char> reversed;
+    for (auto p : dictionary) {
+        reversed.insert({p.second, p.first});
+    }
+
+    return reversed;
+}
+
 // transforma o dicionário em bites para poder ser armazenado físicamento no arquivo final
 // formato: char(1 byte), tamanho do código(1 byte), código(quantos bytes forem necessários)
 vector<char> encodingDictToBytes(map<char, string> dictionary) {
@@ -169,11 +178,13 @@ map<char, string> restoreDictFromBytes(vector<char> bytes) {
     return dict;
 }
 
-vector<char> encodeText(string text, map<char, string> dict) {
+string encodeText(string text, map<char, string> encoder) {
     // codifica usando o dicionário
     string encoded;
     for (char c : text)
-        encoded += dict[c];
+        encoded += encoder[c];
+
+    cout << "Encoded: " << encoded << endl;
 
     // adiciona os bits que faltarem para completar o último byte
     string aux;
@@ -188,7 +199,31 @@ vector<char> encodeText(string text, map<char, string> dict) {
         buffer.insert(buffer.end(), stoi(encoded.substr(i*8, 8), nullptr, 2));
     }
 
-    return buffer;
+    aux = "";
+    for (char c : buffer) {
+        aux += c;
+    }
+
+    return aux;
+}
+
+void decodeText(string encoded, map<char, string> encoder, int shift) {
+    map<string, char> decoder = reverseDictionary(encoder);
+    string bits;
+    for (char c : encoded)
+        bits += tobstr(c);
+
+    string aux, text;
+    for (int i = 0; i < bits.size() - shift; i++) {
+        aux += bits[i];
+
+        if (decoder.count(aux) > 0) {
+            text += decoder[aux];
+            aux = "";
+        }
+    }
+
+    cout << text << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -204,7 +239,7 @@ int main(int argc, char *argv[]) {
     map<char, string> encoder;
     encodingDictionary(tree, &encoder);
     vector<char> bytes_dict_buffer = encodingDictToBytes(encoder);
-    vector<char> encoded_text_buffer = encodeText(text, encoder);
+    string encoded_text = encodeText(text, encoder);
 
     cout << endl << "Encoding dictionary to store in file: " << endl;
     for (auto i : bytes_dict_buffer) {
@@ -216,6 +251,9 @@ int main(int argc, char *argv[]) {
     for (auto i : converted) {
         cout << i.first << ": " << i.second << endl;
     }
+    cout << endl;
+
+    decodeText(encoded_text, encoder, 4);
 
     return 0;
 }
