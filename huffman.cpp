@@ -122,7 +122,7 @@ vector<char> encodingDictToBytes(map<char, string> dictionary) {
         int c = 0;
 
         for (int i = 0; i < num_bits; i++) {
-            if (c/8 == 1) {
+            if (c == 8) {
                 c = 0;
                 buffer.push_back(aux);
                 aux = 0b00000000;
@@ -138,7 +138,7 @@ vector<char> encodingDictToBytes(map<char, string> dictionary) {
         buffer.push_back(aux);
     }
 
-    buffer.push_back(0b00000000);
+    buffer.push_back(0x00);
     return buffer;
 }
 
@@ -187,7 +187,7 @@ string encodeText(string text, map<char, string> encoder, int* shift) {
 
     // adiciona os bits que faltarem para completar o último byte
     string aux;
-    *shift = encoded.size()%8;
+    *shift = 8 - encoded.size()%8;
 
     for (int i = 0; i < *shift; i++)
         aux += "0";
@@ -229,7 +229,6 @@ string decodeText(string encoded, map<char, string> encoder, int shift) {
 
 void writeHuffFile(map<char, string> dict, string content, string filename) {
     vector<char> dict_bytes = encodingDictToBytes(dict);
-    ofstream out(filename+".huff");
     string text, encoded_text;
     int shift;
     encoded_text = encodeText(content, dict, &shift);
@@ -244,6 +243,7 @@ void writeHuffFile(map<char, string> dict, string content, string filename) {
     text += char(shift);
     text += encoded_text;
 
+    ofstream out(filename+".huff", ios_base::binary);
     out << text;
     out.close();
 }
@@ -273,11 +273,11 @@ void readHuffFile(string filename) {
     division += char(0xAA);
 
     int dict_final_len = text.find(division);
-    int enc_text_init_pos = dict_final_len+4;
+    int enc_text_init_pos = dict_final_len+5;
 
-    int shift = (int) text[enc_text_init_pos];
+    int shift = (int) text[enc_text_init_pos-1];
     string bytes_dict = text.substr(0, dict_final_len);
-    string enc_text = text.substr(enc_text_init_pos+1, text.size()-enc_text_init_pos);
+    string enc_text = text.substr(enc_text_init_pos, text.size()-enc_text_init_pos);
     map<char, string> dict = restoreDictFromBytes(vector<char>(bytes_dict.begin(), bytes_dict.end()));
 
     ofstream out(filename+".txt");
