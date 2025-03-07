@@ -208,7 +208,7 @@ string encodeText(string text, map<char, string> encoder, int* shift) {
     return aux;
 }
 
-void decodeText(string encoded, map<char, string> encoder, int shift) {
+string decodeText(string encoded, map<char, string> encoder, int shift) {
     map<string, char> decoder = reverseDictionary(encoder);
     string bits;
     for (char c : encoded)
@@ -224,7 +224,7 @@ void decodeText(string encoded, map<char, string> encoder, int shift) {
         }
     }
 
-    cout << text << endl;
+    return text;
 }
 
 void writeHuffFile(map<char, string> dict, string content, string filename, int shift) {
@@ -244,23 +244,45 @@ void writeHuffFile(map<char, string> dict, string content, string filename, int 
 
     out << text;
     out.close();
-
-    cout << endl << text << endl;
 }
 
-void readFile(string filename, string* text) {
-    ifstream stream(filename);
+void readFile(string filename, string* text, bool binary = false) {
+    ifstream stream;
+    if (binary) {
+        stream.open(filename, ios_base::binary);
+    } else {
+        stream.open(filename);
+    }
+
     stringstream buffer;
     buffer << stream.rdbuf();
     *text = buffer.str();
     stream.close();
 }
 
+void readHuffFile(string filename) {
+    string text;
+    readFile(filename, &text, true);
+
+    string division;
+    division += char(0xAA);
+    division += char(0xAA);
+    division += char(0xAA);
+    division += char(0xAA);
+
+    int dict_final_len = text.find(division);
+    int enc_text_init_pos = dict_final_len+4;
+
+    int shift = (int) text[enc_text_init_pos];
+    string bytes_dict = text.substr(0, dict_final_len);
+    string enc_text = text.substr(enc_text_init_pos+1, text.size()-enc_text_init_pos);
+    map<char, string> dict = restoreDictFromBytes(vector<char>(bytes_dict.begin(), bytes_dict.end()));
+    cout << decodeText(enc_text, dict, shift) << endl;
+}
+
 int main(int argc, char *argv[]) {
     string text;
     readFile(argv[1], &text);
-
-    cout << text << endl;
 
     vector<Node*> f = countFrequence(text);
     Node* tree = buildHuffmanTree(f);
@@ -270,7 +292,7 @@ int main(int argc, char *argv[]) {
     int shift;
     string encoded_text = encodeText(text, encoder, &shift);
 
-    //writeHuffFile(encoder, encoded_text, "a", shift);
+    writeHuffFile(encoder, encoded_text, "a", shift);
     readHuffFile("a.huff");
 
     return 0;
