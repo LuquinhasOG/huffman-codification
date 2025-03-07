@@ -227,10 +227,12 @@ string decodeText(string encoded, map<char, string> encoder, int shift) {
     return text;
 }
 
-void writeHuffFile(map<char, string> dict, string content, string filename, int shift) {
+void writeHuffFile(map<char, string> dict, string content, string filename) {
     vector<char> dict_bytes = encodingDictToBytes(dict);
     ofstream out(filename+".huff");
-    string text;
+    string text, encoded_text;
+    int shift;
+    encoded_text = encodeText(content, dict, &shift);
 
     for (char c : dict_bytes)
         text += c;
@@ -240,7 +242,7 @@ void writeHuffFile(map<char, string> dict, string content, string filename, int 
     text += char(0xAA);
     text += char(0xAA);
     text += char(shift);
-    text += content;
+    text += encoded_text;
 
     out << text;
     out.close();
@@ -262,7 +264,7 @@ void readFile(string filename, string* text, bool binary = false) {
 
 void readHuffFile(string filename) {
     string text;
-    readFile(filename, &text, true);
+    readFile(filename+".huff", &text, true);
 
     string division;
     division += char(0xAA);
@@ -277,23 +279,29 @@ void readHuffFile(string filename) {
     string bytes_dict = text.substr(0, dict_final_len);
     string enc_text = text.substr(enc_text_init_pos+1, text.size()-enc_text_init_pos);
     map<char, string> dict = restoreDictFromBytes(vector<char>(bytes_dict.begin(), bytes_dict.end()));
-    cout << decodeText(enc_text, dict, shift) << endl;
+
+    ofstream out(filename+".txt");
+    out << decodeText(enc_text, dict, shift);
+    out.close();
 }
 
 int main(int argc, char *argv[]) {
-    string text;
-    readFile(argv[1], &text);
+    if (string(argv[1]) == "comp") {
+        string text;
+        readFile(argv[2], &text);
 
-    vector<Node*> f = countFrequence(text);
-    Node* tree = buildHuffmanTree(f);
-    map<char, string> encoder;
-    encodingDictionary(tree, &encoder);
-    vector<char> bytes_dict_buffer = encodingDictToBytes(encoder);
-    int shift;
-    string encoded_text = encodeText(text, encoder, &shift);
+        Node* tree = buildHuffmanTree(countFrequence(text));
+        map<char, string> encoder;
+        encodingDictionary(tree, &encoder);
 
-    writeHuffFile(encoder, encoded_text, "a", shift);
-    readHuffFile("a.huff");
+        int shift;
+        writeHuffFile(encoder, text, argv[3]);
+
+        cout << "Text compressed to " << argv[3] << ".huff" << endl;
+    } else if (string(argv[1]) == "decomp") {
+        readHuffFile(argv[2]);
+        cout << "Text decompressed to " << argv[2] << ".text" << endl;
+    }
 
     return 0;
 }
