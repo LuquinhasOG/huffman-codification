@@ -10,6 +10,7 @@ using namespace std;
 #define tobstr(s) bitset<8>(s).to_string()
 #define bit 0b00000001
 #define pnode(n) cout << n->getSymbol() << ": " << n->getFrequence()
+#define DIV ""+char(0xAA)+char(0xAA)+char(0xAA)+char(0xAA)
 
 // classe que modela os nós da árvore
 class Node {
@@ -178,17 +179,17 @@ map<char, string> restoreDictFromBytes(vector<char> bytes) {
     return dict;
 }
 
-string encodeText(string text, map<char, string> encoder) {
+string encodeText(string text, map<char, string> encoder, int* shift) {
     // codifica usando o dicionário
     string encoded;
     for (char c : text)
         encoded += encoder[c];
 
-    cout << "Encoded: " << encoded << endl;
-
     // adiciona os bits que faltarem para completar o último byte
     string aux;
-    for (int i = 0; i < encoded.size()%8; i++)
+    *shift = encoded.size()%8;
+
+    for (int i = 0; i < *shift; i++)
         aux += "0";
 
     encoded += aux;
@@ -226,34 +227,51 @@ void decodeText(string encoded, map<char, string> encoder, int shift) {
     cout << text << endl;
 }
 
-int main(int argc, char *argv[]) {
-    ifstream stream(argv[1]);
-    stringstream buffer;
+void writeHuffFile(map<char, string> dict, string content, string filename, int shift) {
+    vector<char> dict_bytes = encodingDictToBytes(dict);
+    ofstream out(filename+".huff");
     string text;
+
+    for (char c : dict_bytes)
+        text += c;
+
+    text += char(0xAA);
+    text += char(0xAA);
+    text += char(0xAA);
+    text += char(0xAA);
+    text += char(shift);
+    text += content;
+
+    out << text;
+    out.close();
+
+    cout << endl << text << endl;
+}
+
+void readFile(string filename, string* text) {
+    ifstream stream(filename);
+    stringstream buffer;
     buffer << stream.rdbuf();
-    text = buffer.str();
+    *text = buffer.str();
     stream.close();
+}
+
+int main(int argc, char *argv[]) {
+    string text;
+    readFile(argv[1], &text);
+
+    cout << text << endl;
 
     vector<Node*> f = countFrequence(text);
     Node* tree = buildHuffmanTree(f);
     map<char, string> encoder;
     encodingDictionary(tree, &encoder);
     vector<char> bytes_dict_buffer = encodingDictToBytes(encoder);
-    string encoded_text = encodeText(text, encoder);
+    int shift;
+    string encoded_text = encodeText(text, encoder, &shift);
 
-    cout << endl << "Encoding dictionary to store in file: " << endl;
-    for (auto i : bytes_dict_buffer) {
-        cout << tobstr(i) << endl;
-    }
-    cout << endl;
-
-    map<char, string> converted = restoreDictFromBytes(bytes_dict_buffer);
-    for (auto i : converted) {
-        cout << i.first << ": " << i.second << endl;
-    }
-    cout << endl;
-
-    decodeText(encoded_text, encoder, 4);
+    //writeHuffFile(encoder, encoded_text, "a", shift);
+    readHuffFile("a.huff");
 
     return 0;
 }
